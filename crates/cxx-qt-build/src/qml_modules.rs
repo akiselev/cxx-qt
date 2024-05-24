@@ -24,6 +24,8 @@ where
     pub rust_files: &'a [A],
     /// `.qml` files included in the module
     pub qml_files: &'a [B],
+    /// Other files to include in the qmldir
+    pub qml_dir: &'a [(B, B)],
     /// Other QRC resources (such as images) included in the module
     //
     // Reuse the `A` generic from rust_files to allow the compiler to infer the
@@ -47,6 +49,7 @@ where
             version_minor: 0,
             rust_files: &[],
             qml_files: &[],
+            qml_dir: &[],
             qrc_files: &[],
         }
     }
@@ -61,6 +64,7 @@ pub(crate) struct OwningQmlModule {
     pub version_minor: usize,
     pub rust_files: Vec<PathBuf>,
     pub qml_files: Vec<PathBuf>,
+    pub qml_dir: Vec<(String, PathBuf)>,
     pub qrc_files: Vec<PathBuf>,
 }
 
@@ -76,6 +80,16 @@ impl<A: AsRef<Path>, B: AsRef<Path>> From<QmlModule<'_, A, B>> for OwningQmlModu
             version_minor: other.version_minor,
             rust_files: collect_pathbuf_vec(other.rust_files),
             qml_files: collect_pathbuf_vec(other.qml_files),
+            qml_dir: other
+                .qml_dir
+                .iter()
+                .map(|(n, p)| {
+                    (
+                        n.as_ref().to_string_lossy().to_string(),
+                        p.as_ref().to_path_buf(),
+                    )
+                })
+                .collect(),
             qrc_files: collect_pathbuf_vec(other.qrc_files),
         }
     }

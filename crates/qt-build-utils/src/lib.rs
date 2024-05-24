@@ -661,6 +661,7 @@ impl QtBuild {
         version_minor: usize,
         plugin_name: &str,
         qml_files: &[impl AsRef<Path>],
+        qml_dir: &[(String, PathBuf)],
         qrc_files: &[impl AsRef<Path>],
     ) -> QmlModuleRegistrationFiles {
         if self.qmltyperegistrar_executable.is_none() {
@@ -688,6 +689,7 @@ impl QtBuild {
 
         // Generate qmldir file
         let qmldir_file_path = format!("{qml_module_dir}/qmldir");
+        println!("cargo:warning=>>>>> Generating qmldir file for QML module {qmldir_file_path}");
         {
             let mut qmldir = File::create(&qmldir_file_path).expect("Could not create qmldir file");
             write!(
@@ -700,6 +702,13 @@ prefer :/qt/qml/{qml_uri_dirs}/
 "
             )
             .expect("Could not write qmldir file");
+            println!("cargo:warning=>>>>> Writing to qmldir");
+
+            for (name, path) in qml_dir {
+                println!("cargo:warning=>>>>> Writing {} {}", name, path.display());
+                write!(qmldir, "{} 1.0 {}\n", name, path.display())
+                    .expect("Could not write qmldir file");
+            }
         }
 
         // Generate .qrc file and run rcc on it
@@ -939,6 +948,17 @@ Q_IMPORT_PLUGIN({plugin_class_name});
             input_path.file_name().unwrap().to_str().unwrap()
         ));
 
+        println!(
+            "cargo:warning=RCC {}",
+            [
+                input_path.to_str().unwrap(),
+                "-o",
+                output_path.to_str().unwrap(),
+                "--name",
+                input_path.file_stem().unwrap().to_str().unwrap(),
+            ]
+            .join(" ")
+        );
         let cmd = Command::new(self.rcc_executable.as_ref().unwrap())
             .args([
                 input_path.to_str().unwrap(),

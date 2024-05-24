@@ -629,6 +629,7 @@ impl CxxQtBuilder {
                 qml_module.version_minor,
                 lib_name,
                 &qml_module.qml_files,
+                &qml_module.qml_dir,
                 &qml_module.qrc_files,
             );
             self.cc_builder
